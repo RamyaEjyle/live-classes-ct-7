@@ -1,0 +1,36 @@
+---
+- name: Install Nginx and Apache on MySQL Server
+  hosts: mysql
+  become: yes  # Run tasks as sudo
+  tasks:
+    - name: Install Nginx
+      ansible.builtin.package:
+        name: nginx
+        state: present
+
+    - name: Write Nginx installation status to file
+      ansible.builtin.lineinfile:
+        path: /tmp/sw_status.txt
+        line: "nginx installed successfully!!"
+        create: yes
+
+    - name: Install Apache
+      ansible.builtin.package:
+        name: apache2
+        state: present
+
+    - name: Append Apache installation status to file
+      ansible.builtin.lineinfile:
+        path: /tmp/sw_status.txt
+        line: "apache installed successfully!!"
+
+    - name: Stop Nginx to free port 80
+      ansible.builtin.service:
+        name: nginx
+        state: stopped
+
+    - name: Start Apache only if Nginx is stopped
+      ansible.builtin.service:
+        name: apache2
+        state: started
+      when: ansible_facts.services["nginx.service"].state == "stopped"
