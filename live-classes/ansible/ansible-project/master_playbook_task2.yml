@@ -1,0 +1,6 @@
+---
+- name: Apply Apache Setup Role
+  hosts: mysql
+  become: yes
+  roles:
+    - apache_setup
