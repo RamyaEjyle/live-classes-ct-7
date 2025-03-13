@@ -4,7 +4,7 @@
   become: yes  # Run tasks as sudo
   tasks:
     - name: Install Nginx
-      ansible.builtin.yum:
+      ansible.builtin.package:
         name: nginx
         state: present
 
@@ -14,8 +14,12 @@
         line: "nginx installed successfully!!"
         create: yes
 
+    - name: Show Nginx installation status
+      ansible.builtin.debug:
+        msg: "nginx installed successfully!!"
+
     - name: Install Apache (httpd for RHEL)
-      ansible.builtin.yum:
+      ansible.builtin.package:
         name: httpd
         state: present
 
@@ -24,16 +28,38 @@
         path: /tmp/sw_status.txt
         line: "apache installed successfully!!"
 
+    - name: Show Apache installation status
+      ansible.builtin.debug:
+        msg: "apache installed successfully!!"
+
     - name: Stop Nginx to free port 80
-      ansible.builtin.service:
+      ansible.builtin.systemd:
         name: nginx
         state: stopped
+        enabled: no
 
-    - name: Refresh service facts
-      ansible.builtin.service_facts:
+    - name: Ensure Nginx is stopped
+      ansible.builtin.command: systemctl is-active nginx
+      register: nginx_status
+      ignore_errors: yes
+
+    - name: Debug Nginx status
+      ansible.builtin.debug:
+        msg: "Nginx is {{ nginx_status.stdout }}"
 
     - name: Start Apache only if Nginx is stopped
       ansible.builtin.service:
         name: httpd
         state: started
-      when: ansible_facts.services["nginx.service"]["state"] == "stopped"
+      when: nginx_status.stdout == "inactive"
+
+    - name: Append Apache start status to file
+      ansible.builtin.lineinfile:
+        path: /tmp/sw_status.txt
+        line: "Apache started successfully!!"
+      when: nginx_status.stdout == "inactive"
+
+    - name: Show Apache start status
+      ansible.builtin.debug:
+        msg: "Apache started successfully!!"
+      when: nginx_status.stdout == "inactive"
