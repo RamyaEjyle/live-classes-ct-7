@@ -1,5 +1,5 @@
 [mysql]
-172.31.16.122
+3.87.189.135
 
 [mysql:vars]
 ansible_user={{ ansible_user }}
